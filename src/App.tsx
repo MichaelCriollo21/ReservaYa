@@ -12,11 +12,6 @@ function App() {
       </header>
 
       <RegistroPage />
-
-      <section className="future-panel">
-        <h2>Próximo módulo</h2>
-        <p>En la siguiente etapa añadiremos la gestión de reservas con horarios y disponibilidad.</p>
-      </section>
     </main>
   )
 }

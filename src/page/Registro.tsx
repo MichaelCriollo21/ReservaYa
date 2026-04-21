@@ -8,7 +8,7 @@ import type {
   ClientePayload,
   ReservaPayload,
 } from '../types'
-import { messages, isEmail, isPhoneValid } from '../tools/validation'
+import { messages, isEmail, isPhoneValid } from '../Tools/validation'
 import { horarios as horariosModel } from '../models/horarios'
 import { mesas as mesasModel } from '../models/mesas'
 import { buildClientePayload } from '../models/clienteModel'
