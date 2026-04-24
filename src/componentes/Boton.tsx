@@ -15,8 +15,8 @@ export function Boton({
   return (
     <button
       className={[
-        'boton',
-        variant === 'secondary' ? 'boton-secondary' : 'boton-primary',
+        'btn',
+        variant === 'secondary' ? 'btn-outline-secondary' : 'btn-primary',
         className,
       ]
         .filter(Boolean)

@@ -5,7 +5,9 @@ export function buildReservaPayload(values: ReservationFields): ReservaPayload {
     estado: false,
     fechaReservacion: values.fechaReservacion,
     MesaidMesa: values.mesaId,
-    HorarioidHorario: values.horarioId,
+    Nombre: values.clienteNombre.trim(),
+    Telefono: values.clienteTelefono.trim(),
+    Correo: values.clienteCorreo.trim(),
     Observacion: values.observacion?.trim() || undefined,
   }
 }

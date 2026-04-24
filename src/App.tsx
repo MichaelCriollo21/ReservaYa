@@ -1,4 +1,4 @@
-import { RegistroPage } from './page/Registro'
+import { RegistroPage } from './page/Reservas'
 
 function App() {
   return (
@@ -7,7 +7,6 @@ function App() {
         <div>
           <p className="eyebrow">ReservaYa</p>
           <h1>Registro de reserva</h1>
-          <p className="lead">Registra un cliente y su reserva en un único formulario.</p>
         </div>
       </header>
 

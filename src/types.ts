@@ -17,7 +17,6 @@ export interface ReservationFields {
   clienteTelefono: string
   clienteCorreo: string
   fechaReservacion: string
-  horarioId: string
   mesaId: string
   observacion?: string
 }
@@ -33,9 +32,11 @@ export interface ReservaPayload {
   fechaReservacion: string
   MesaidMesa: string
   UsuarioidUsuario?: string
-  HorarioidHorario: string
-  ClienteIdCliente?: string
+  Nombre: string
+  Telefono: string
+  Correo: string
   Observacion?: string
+  NumeroReserva?: string
 }
 
 type ValidationErrors<T> = Partial<Record<keyof T, string>>

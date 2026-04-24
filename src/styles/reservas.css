@@ -1,0 +1,76 @@
+:root {
+  color-scheme: light;
+}
+
+body {
+  margin: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(135deg, #17324d 0%, #214f6d 45%, #f4efe7 45%, #f4efe7 100%);
+}
+
+#root {
+  min-height: 100vh;
+}
+
+.reservas-bg {
+  background:
+    radial-gradient(circle at top right, rgba(255, 255, 255, 0.18), transparent 22%),
+    linear-gradient(135deg, rgba(15, 23, 42, 0.2), rgba(15, 23, 42, 0));
+}
+
+.reservas-kicker {
+  letter-spacing: 0.18em;
+}
+
+.reservas-card {
+  border-radius: 1.5rem;
+  overflow: hidden;
+}
+
+.reservas-card .form-control,
+.reservas-card .form-select {
+  min-height: 3rem;
+  border-radius: 0.85rem;
+  border-color: #d6dee8;
+  box-shadow: none;
+}
+
+.reservas-card .form-control:focus,
+.reservas-card .form-select:focus {
+  border-color: #3a7ca5;
+  box-shadow: 0 0 0 0.2rem rgba(58, 124, 165, 0.18);
+}
+
+.reservas-card .btn {
+  min-height: 3rem;
+  border-radius: 0.85rem;
+  font-weight: 600;
+}
+
+.reservas-card .btn-primary {
+  background-color: #1f6f8b;
+  border-color: #1f6f8b;
+}
+
+.reservas-card .btn-primary:hover,
+.reservas-card .btn-primary:focus {
+  background-color: #195b72;
+  border-color: #195b72;
+}
+
+.resumen-panel {
+  background: linear-gradient(180deg, #f8fafc 0%, #eef4f7 100%);
+  border: 1px solid #dbe5eb;
+  border-radius: 1.25rem;
+  padding: 1.5rem;
+}
+
+.swal2-confirm {
+  background-color: #1f6f8b !important;
+}
+
+@media (max-width: 767.98px) {
+  body {
+    background: linear-gradient(180deg, #17324d 0%, #214f6d 30%, #f4efe7 30%, #f4efe7 100%);
+  }
+}
