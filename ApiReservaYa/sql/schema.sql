@@ -26,6 +26,7 @@ CREATE TABLE Reserva (
   telefono BIGINT NOT NULL,
   correo VARCHAR(255) NOT NULL,
   numeroReserva VARCHAR(255) NOT NULL UNIQUE,
+  observacion VARCHAR(255) NULL,
   CONSTRAINT FK_Reserva_Mesa FOREIGN KEY (MesaidMesa) REFERENCES Mesa(idMesa),
   CONSTRAINT FK_Reserva_Usuario FOREIGN KEY (UsuarioidUsuario) REFERENCES Usuario(idUsuario)
 );

@@ -39,6 +39,10 @@ export interface ReservaPayload {
   NumeroReserva?: string
 }
 
+export interface ReservaCreadaPayload extends ReservaPayload {
+  idReserva: number
+}
+
 type ValidationErrors<T> = Partial<Record<keyof T, string>>
 
 export type FormValues<T> = T

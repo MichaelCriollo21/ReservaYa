@@ -8,7 +8,7 @@ import { buildReservaPayload } from '../models/reservaModel'
 import { getAvailableTables, createReservation } from '../Tools/api'
 import { messages, isEmail, isPhoneValid } from '../Tools/validation'
 import type { MesaModel } from '../models/mesas'
-import type { ReservationFields } from '../types'
+import type { ReservationFields, ReservaCreadaPayload } from '../types'
 
 const initialValues: ReservationFields = {
   clienteNombre: '',
@@ -80,16 +80,6 @@ const validateReserva = (values: ReservationFields) => {
   return errors
 }
 
-type ReservaCreada = {
-  idReserva: number
-  NumeroReserva: string
-  Nombre: string
-  Correo: string
-  Telefono: string
-  MesaidMesa: string
-  fechaReservacion: string
-}
-
 function getMinDateTimeValue() {
   const now = new Date()
   const localDate = new Date(now.getTime() - now.getTimezoneOffset() * 60000)
@@ -100,7 +90,8 @@ export function RegistroPage() {
   const [mesas, setMesas] = useState<MesaModel[]>([])
   const [isLoadingMesas, setIsLoadingMesas] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [reservaCreada, setReservaCreada] = useState<ReservaCreada | null>(null)
+  const [reservaCreada, setReservaCreada] = useState<ReservaCreadaPayload | null>(null)
+  const [showNoTablesAlert, setShowNoTablesAlert] = useState(false)
 
   const { values, errors, handleChange, handleSubmit, resetForm } = useForm<ReservationFields>(
     initialValues,
@@ -121,12 +112,14 @@ export function RegistroPage() {
         }
 
         setMesas(result)
+        setShowNoTablesAlert(result.length === 0)
       } catch (error) {
         if (!mounted) {
           return
         }
 
         setMesas([])
+        setShowNoTablesAlert(false)
         await Swal.fire({
           icon: 'error',
           title: 'No pudimos cargar las mesas',
@@ -152,7 +145,7 @@ export function RegistroPage() {
 
     try {
       const response = await createReservation(buildReservaPayload(formValues))
-      const reserva = (response?.data ?? response) as ReservaCreada
+      const reserva = (response?.data ?? response) as ReservaCreadaPayload
 
       setReservaCreada(reserva)
       resetForm()
@@ -191,6 +184,12 @@ export function RegistroPage() {
                 El select de mesas se llena unicamente con la informacion que devuelve la base de datos.
               </TextoAyuda>
             </div>
+
+            {showNoTablesAlert ? (
+              <div className="alert alert-warning" role="alert">
+                Sin mesas disponibles.
+              </div>
+            ) : null}
 
             <form onSubmit={handleSubmit(onSubmit)} noValidate>
               <div className="row g-3">
@@ -241,11 +240,6 @@ export function RegistroPage() {
                   error={errors.mesaId}
                   disabled={isLoadingMesas}
                   placeholder={isLoadingMesas ? 'Cargando mesas...' : 'Selecciona una mesa'}
-                  helpText={
-                    mesas.length > 0
-                      ? `${mesas.length} mesa(s) cargadas desde base de datos.`
-                      : 'No hay mesas disponibles en base de datos para la fecha seleccionada.'
-                  }
                   wrapperClassName="col-12 col-md-6"
                 />
 

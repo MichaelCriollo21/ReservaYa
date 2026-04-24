@@ -1,10 +1,10 @@
 const pool = require('../config/db');
 
 const Reserva = {
-  crear: async ({ estado, fechaReservacion, MesaidMesa, ClienteIdCliente, Observacion }) => {
+  crear: async ({ estado, fechaReservacion, MesaidMesa, UsuarioidUsuario, Nombre, Telefono, Correo, NumeroReserva, Observacion }) => {
     const [result] = await pool.execute(
-      'INSERT INTO Reserva (estado, fechaReservacion, MesaidMesa, ClienteIdCliente, Observacion) VALUES (?, ?, ?, ?, ?)',
-      [estado ? 1 : 0, fechaReservacion, MesaidMesa, ClienteIdCliente, Observacion || null]
+      'INSERT INTO Reserva (estado, fechaReservacion, MesaidMesa, UsuarioidUsuario, Nombre, Telefono, Correo, NumeroReserva, observacion) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [estado ? 1 : 0, fechaReservacion, MesaidMesa, UsuarioidUsuario, Nombre, Telefono, Correo, NumeroReserva, Observacion || null]
     );
     return result;
   },

@@ -1,11 +1,11 @@
 const pool = require('../config/db')
 
 // POST /api/reservas
-// Expects body: { Nombre, Telefono, Correo, fechaReservacion, MesaidMesa }
+// Expects body: { Nombre, Telefono, Correo, fechaReservacion, MesaidMesa, Observacion }
 const crearReserva = async (req, res) => {
   const reserva = req.body || {}
 
-  const { Nombre, Telefono, Correo, fechaReservacion, MesaidMesa } = reserva
+  const { Nombre, Telefono, Correo, fechaReservacion, MesaidMesa, Observacion } = reserva
 
   if (!Nombre || !Telefono || !Correo || !fechaReservacion || !MesaidMesa) {
     return res.status(400).json({ ok: false, message: 'Faltan campos requeridos' })
@@ -25,6 +25,21 @@ const crearReserva = async (req, res) => {
   try {
     await connection.beginTransaction()
 
+    const [mesaRows] = await connection.execute(
+      'SELECT idMesa, estado FROM Mesa WHERE idMesa = ? FOR UPDATE',
+      [MesaidMesa]
+    )
+
+    if (!mesaRows.length) {
+      await connection.rollback()
+      return res.status(404).json({ ok: false, message: 'La mesa seleccionada no existe' })
+    }
+
+    if (Number(mesaRows[0].estado) === 0) {
+      await connection.rollback()
+      return res.status(400).json({ ok: false, message: 'La mesa seleccionada no esta disponible' })
+    }
+
     const [countRows] = await connection.execute('SELECT COUNT(*) as cnt FROM Reserva')
     const count = (countRows && countRows[0] && countRows[0].cnt) ? Number(countRows[0].cnt) : 0
     const next = count + 1
@@ -33,8 +48,13 @@ const crearReserva = async (req, res) => {
     const UsuarioidUsuario = reserva.UsuarioidUsuario || 1
 
     const [result] = await connection.execute(
-      'INSERT INTO Reserva (estado, fechaReservacion, MesaidMesa, UsuarioidUsuario, Nombre, Telefono, Correo, NumeroReserva) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-      [0, reservationDate, MesaidMesa, UsuarioidUsuario, Nombre, Telefono, Correo, NumeroReserva]
+      'INSERT INTO Reserva (estado, fechaReservacion, MesaidMesa, UsuarioidUsuario, Nombre, Telefono, Correo, NumeroReserva, Observacion) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [0, reservationDate, MesaidMesa, UsuarioidUsuario, Nombre, Telefono, Correo, NumeroReserva, Observacion || null]
+    )
+
+    await connection.execute(
+      'UPDATE Mesa SET estado = 0 WHERE idMesa = ?',
+      [MesaidMesa]
     )
 
     await connection.commit()
@@ -49,6 +69,8 @@ const crearReserva = async (req, res) => {
       Telefono,
       Correo,
       NumeroReserva,
+      Observacion: Observacion || null,
+      estadoMesa: 0,
     }
 
     return res.status(201).json({ ok: true, data: creado })
