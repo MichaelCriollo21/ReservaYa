@@ -2,40 +2,40 @@ import { useEffect, useState } from 'react'
 import Swal from 'sweetalert2'
 import { Boton } from '../componentes/Boton'
 import { Campo, CampoSelect } from '../componentes/Campos'
-import { TextoAyuda, TituloSeccion } from '../componentes/Titulos'
+import { TituloSeccion } from '../componentes/Titulos'
+import type { ReservaInterface } from '../Interfaces/ReservaInterface'
+import type { MesaInterface } from '../Interfaces/MesaInterface'
 import { useForm } from '../hooks/useForm'
-import { buildReservaPayload } from '../models/reservaModel'
-import { getAvailableTables, createReservation } from '../Tools/api'
-import { messages, isEmail, isPhoneValid } from '../Tools/validation'
-import type { MesaModel } from '../models/mesas'
-import type { ReservationFields, ReservaCreadaPayload } from '../types'
+import { createReservation, getAvailableTables, getReservations } from '../Tools/api'
+import { isEmail, isPhoneValid, messages } from '../Tools/validation'
 
-const initialValues: ReservationFields = {
-  clienteNombre: '',
-  clienteTelefono: '',
-  clienteCorreo: '',
+const initialValues: ReservaInterface = {
+  estado: false,
   fechaReservacion: '',
-  mesaId: '',
+  MesaidMesa: '',
+  nombre: '',
+  telefono: '',
+  correo: '',
   observacion: '',
 }
 
 const customerFields = [
   {
-    id: 'clienteNombre',
+    id: 'nombre',
     label: 'Nombre',
     autoComplete: 'name',
     placeholder: 'Nombre completo',
     type: 'text',
   },
   {
-    id: 'clienteTelefono',
+    id: 'telefono',
     label: 'Telefono',
     autoComplete: 'tel',
     placeholder: '3001234567',
     type: 'tel',
   },
   {
-    id: 'clienteCorreo',
+    id: 'correo',
     label: 'Correo electronico',
     autoComplete: 'email',
     placeholder: 'cliente@correo.com',
@@ -43,23 +43,23 @@ const customerFields = [
   },
 ] as const
 
-const validateReserva = (values: ReservationFields) => {
-  const errors: Partial<Record<keyof ReservationFields, string>> = {}
+const validateReserva = (values: ReservaInterface) => {
+  const errors: Partial<Record<keyof ReservaInterface, string>> = {}
 
-  if (!values.clienteNombre.trim()) {
-    errors.clienteNombre = messages.requiredName
+  if (!values.nombre.trim()) {
+    errors.nombre = messages.requiredName
   }
 
-  if (!values.clienteCorreo.trim()) {
-    errors.clienteCorreo = messages.requiredEmail
-  } else if (!isEmail(values.clienteCorreo)) {
-    errors.clienteCorreo = messages.invalidEmail
+  if (!values.correo.trim()) {
+    errors.correo = messages.requiredEmail
+  } else if (!isEmail(values.correo)) {
+    errors.correo = messages.invalidEmail
   }
 
-  if (!values.clienteTelefono.trim()) {
-    errors.clienteTelefono = messages.requiredPhone
-  } else if (!isPhoneValid(values.clienteTelefono)) {
-    errors.clienteTelefono = messages.invalidPhone
+  if (!values.telefono.trim()) {
+    errors.telefono = messages.requiredPhone
+  } else if (!isPhoneValid(values.telefono)) {
+    errors.telefono = messages.invalidPhone
   }
 
   if (!values.fechaReservacion.trim()) {
@@ -73,8 +73,8 @@ const validateReserva = (values: ReservationFields) => {
     }
   }
 
-  if (!values.mesaId) {
-    errors.mesaId = messages.selectMesa
+  if (!values.MesaidMesa) {
+    errors.MesaidMesa = messages.selectMesa
   }
 
   return errors
@@ -86,14 +86,39 @@ function getMinDateTimeValue() {
   return localDate.toISOString().slice(0, 16)
 }
 
+function formatReservationDate(value: string) {
+  const date = new Date(value)
+
+  if (Number.isNaN(date.getTime())) {
+    return value
+  }
+
+  return new Intl.DateTimeFormat('es-CO', {
+    dateStyle: 'short',
+    timeStyle: 'short',
+  }).format(date)
+}
+
+function buildReservaPayload(values: ReservaInterface): ReservaInterface {
+  return {
+    ...values,
+    estado: false,
+    nombre: values.nombre.trim(),
+    telefono: values.telefono.trim(),
+    correo: values.correo.trim(),
+    observacion: values.observacion?.trim() || undefined,
+  }
+}
+
 export function RegistroPage() {
-  const [mesas, setMesas] = useState<MesaModel[]>([])
+  const [mesas, setMesas] = useState<MesaInterface[]>([])
+  const [reservas, setReservas] = useState<ReservaInterface[]>([])
   const [isLoadingMesas, setIsLoadingMesas] = useState(false)
+  const [isLoadingReservas, setIsLoadingReservas] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [reservaCreada, setReservaCreada] = useState<ReservaCreadaPayload | null>(null)
   const [showNoTablesAlert, setShowNoTablesAlert] = useState(false)
 
-  const { values, errors, handleChange, handleSubmit, resetForm } = useForm<ReservationFields>(
+  const { values, errors, handleChange, handleSubmit, resetForm } = useForm<ReservaInterface>(
     initialValues,
     validateReserva,
   )
@@ -140,20 +165,60 @@ export function RegistroPage() {
     }
   }, [values.fechaReservacion])
 
-  const onSubmit = async (formValues: ReservationFields) => {
+  useEffect(() => {
+    let mounted = true
+
+    const loadReservas = async () => {
+      setIsLoadingReservas(true)
+
+      try {
+        const result = await getReservations()
+
+        if (!mounted) {
+          return
+        }
+
+        setReservas(result)
+      } catch (error) {
+        if (!mounted) {
+          return
+        }
+
+        setReservas([])
+        await Swal.fire({
+          icon: 'error',
+          title: 'No pudimos cargar la tabla de reservas',
+          text: error instanceof Error ? error.message : 'Intenta nuevamente en unos segundos.',
+          confirmButtonText: 'Entendido',
+        })
+      } finally {
+        if (mounted) {
+          setIsLoadingReservas(false)
+        }
+      }
+    }
+
+    loadReservas()
+
+    return () => {
+      mounted = false
+    }
+  }, [])
+
+  const onSubmit = async (formValues: ReservaInterface) => {
     setIsSubmitting(true)
 
     try {
       const response = await createReservation(buildReservaPayload(formValues))
-      const reserva = (response?.data ?? response) as ReservaCreadaPayload
+      const reserva = (response?.data ?? response) as ReservaInterface
 
-      setReservaCreada(reserva)
+      setReservas((current) => [reserva, ...current].slice(0, 10))
       resetForm()
 
       await Swal.fire({
         icon: 'success',
         title: 'Reserva registrada',
-        text: `La reserva ${reserva.NumeroReserva} fue creada correctamente.`,
+        text: `La reserva ${reserva.numeroReserva} fue creada correctamente.`,
         confirmButtonText: 'Perfecto',
       })
     } catch (error) {
@@ -179,10 +244,7 @@ export function RegistroPage() {
         <div className="row g-4 align-items-start">
           <div className="col-12 col-xl-8">
             <div className="mb-4">
-              <TituloSeccion>Completa la reserva</TituloSeccion>
-              <TextoAyuda>
-                El select de mesas se llena unicamente con la informacion que devuelve la base de datos.
-              </TextoAyuda>
+              <TituloSeccion>Crear reserva</TituloSeccion>
             </div>
 
             {showNoTablesAlert ? (
@@ -191,78 +253,123 @@ export function RegistroPage() {
               </div>
             ) : null}
 
-            <form onSubmit={handleSubmit(onSubmit)} noValidate>
-              <div className="row g-3">
-                <div className="col-12">
-                  <h3 className="h5 fw-semibold text-dark border-bottom pb-2 mb-1">Datos del cliente</h3>
+            <form onSubmit={handleSubmit(onSubmit)} noValidate className="reserva-form-layout">
+              <section className="reserva-form-section">
+                <h3 className="h5 fw-semibold text-dark mb-3">Datos del cliente</h3>
+                <div className="row g-3">
+                  {customerFields.map((field, index) => (
+                    <Campo
+                      key={field.id}
+                      id={field.id}
+                      name={field.id}
+                      label={field.label}
+                      type={field.type}
+                      value={values[field.id]}
+                      onChange={handleChange}
+                      autoComplete={field.autoComplete}
+                      placeholder={field.placeholder}
+                      error={errors[field.id]}
+                      wrapperClassName={index < 2 ? 'col-12 col-md-6' : 'col-12'}
+                    />
+                  ))}
                 </div>
+              </section>
 
-                {customerFields.map((field, index) => (
+              <section className="reserva-form-section">
+                <h3 className="h5 fw-semibold text-dark mb-3">Detalles de la reserva</h3>
+                <div className="row g-3">
                   <Campo
-                    key={field.id}
-                    id={field.id}
-                    name={field.id}
-                    label={field.label}
-                    type={field.type}
-                    value={values[field.id]}
+                    id="fechaReservacion"
+                    name="fechaReservacion"
+                    label="Fecha y hora"
+                    type="datetime-local"
+                    value={values.fechaReservacion}
                     onChange={handleChange}
-                    autoComplete={field.autoComplete}
-                    placeholder={field.placeholder}
-                    error={errors[field.id]}
-                    wrapperClassName={index < 2 ? 'col-12 col-md-6' : 'col-12'}
+                    error={errors.fechaReservacion}
+                    min={getMinDateTimeValue()}
+                    helpText="Solo se permiten fechas y horas desde el momento actual en adelante."
+                    wrapperClassName="col-12 col-md-6"
                   />
-                ))}
 
-                <div className="col-12 mt-4">
-                  <h3 className="h5 fw-semibold text-dark border-bottom pb-2 mb-1">Detalles de la reserva</h3>
+                  <CampoSelect
+                    id="MesaidMesa"
+                    name="MesaidMesa"
+                    label="Mesa disponible"
+                    value={values.MesaidMesa}
+                    onChange={handleChange}
+                    options={mesaOptions}
+                    error={errors.MesaidMesa}
+                    disabled={isLoadingMesas}
+                    placeholder={isLoadingMesas ? 'Cargando mesas...' : 'Selecciona una mesa'}
+                    wrapperClassName="col-12 col-md-6"
+                  />
+
+                  <Campo
+                    id="observacion"
+                    name="observacion"
+                    label="Observacion"
+                    value={values.observacion ?? ''}
+                    onChange={handleChange}
+                    placeholder="Dato adicional para el equipo del restaurante"
+                    wrapperClassName="col-12"
+                  />
                 </div>
+              </section>
 
-                <Campo
-                  id="fechaReservacion"
-                  name="fechaReservacion"
-                  label="Fecha y hora"
-                  type="datetime-local"
-                  value={values.fechaReservacion}
-                  onChange={handleChange}
-                  error={errors.fechaReservacion}
-                  min={getMinDateTimeValue()}
-                  helpText="Solo se permiten fechas y horas desde el momento actual en adelante."
-                  wrapperClassName="col-12 col-md-6"
-                />
-
-                <CampoSelect
-                  id="mesaId"
-                  name="mesaId"
-                  label="Mesa disponible"
-                  value={values.mesaId}
-                  onChange={handleChange}
-                  options={mesaOptions}
-                  error={errors.mesaId}
-                  disabled={isLoadingMesas}
-                  placeholder={isLoadingMesas ? 'Cargando mesas...' : 'Selecciona una mesa'}
-                  wrapperClassName="col-12 col-md-6"
-                />
-
-                <Campo
-                  id="observacion"
-                  name="observacion"
-                  label="Observacion"
-                  value={values.observacion ?? ''}
-                  onChange={handleChange}
-                  placeholder="Dato adicional para el equipo del restaurante"
-                  wrapperClassName="col-12"
-                />
-
-                <div className="col-12 d-flex flex-column flex-sm-row gap-2 pt-2">
-                  <Boton type="submit" className="px-4" disabled={isSubmitting}>
-                    {isSubmitting ? 'Guardando...' : 'Guardar reserva'}
-                  </Boton>
-                  <Boton type="button" variant="secondary" onClick={resetForm} disabled={isSubmitting}>
-                    Limpiar formulario
-                  </Boton>
-                </div>
+              <div className="d-flex flex-column flex-sm-row gap-2 pt-2">
+                <Boton type="submit" className="px-4" disabled={isSubmitting}>
+                  {isSubmitting ? 'Guardando...' : 'Guardar reserva'}
+                </Boton>
+                <Boton type="button" variant="secondary" onClick={resetForm} disabled={isSubmitting}>
+                  Limpiar formulario
+                </Boton>
               </div>
             </form>
+          </div>
+
+          <div className="col-12 col-xl-4">
+            <aside className="resumen-panel h-100">
+              <div className="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                  <h3 className="h5 fw-bold mb-0">Ultimas reservas</h3>
+                </div>
+              </div>
+
+              <div className="table-responsive reservas-table-wrap">
+                <table className="table table-sm align-middle mb-0">
+                  <thead>
+                    <tr>
+                      <th scope="col">Numero de reserva</th>
+                      <th scope="col">Nombre</th>
+                      <th scope="col">Fecha</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {isLoadingReservas ? (
+                      <tr>
+                        <td colSpan={3} className="text-center text-secondary py-4">
+                          Cargando reservas...
+                        </td>
+                      </tr>
+                    ) : reservas.length > 0 ? (
+                      reservas.map((reserva, index) => (
+                        <tr key={`${reserva.numeroReserva ?? index}-${reserva.fechaReservacion}`}>
+                          <td className="fw-semibold">{reserva.numeroReserva}</td>
+                          <td>{reserva.nombre}</td>
+                          <td>{formatReservationDate(reserva.fechaReservacion)}</td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={3} className="text-center text-secondary py-4">
+                          No hay reservas registradas.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </aside>
           </div>
         </div>
       </div>

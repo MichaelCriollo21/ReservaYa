@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { ChangeEvent, FormEvent } from 'react'
-import type { FormErrors, FormValues } from '../types'
+import type { FormErrors, FormValues } from '../Interfaces/types'
 
 type ValidateFn<T> = (values: FormValues<T>) => FormErrors<T>
 

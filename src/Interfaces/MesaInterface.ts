@@ -1,4 +1,4 @@
-export type MesaModel = {
+export interface MesaInterface {
   id: string
   capacidad: number
 }

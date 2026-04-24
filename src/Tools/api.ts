@@ -1,5 +1,5 @@
-import type { MesaModel } from '../models/mesas'
-import type { ReservaPayload } from '../types'
+import type { ReservaInterface } from '../Interfaces/ReservaInterface'
+import type { MesaInterface } from '../Interfaces/MesaInterface'
 
 type ApiListResponse<T> = {
   data?: T
@@ -31,11 +31,11 @@ export async function getAvailableTables(fechaReservacion?: string) {
     throw new Error(await getErrorMessage(res))
   }
 
-  const result: ApiListResponse<MesaModel[]> | MesaModel[] = await res.json()
+  const result: ApiListResponse<MesaInterface[]> | MesaInterface[] = await res.json()
   return Array.isArray(result) ? result : result.data ?? []
 }
 
-export async function createReservation(payload: ReservaPayload) {
+export async function createReservation(payload: ReservaInterface) {
   const base = getApiBaseUrl()
   const url = `${base.replace(/\/$/, '')}/api/reservas`
 
@@ -52,7 +52,21 @@ export async function createReservation(payload: ReservaPayload) {
   return res.json()
 }
 
-export default { createReservation, getAvailableTables }
+export async function getReservations() {
+  const base = getApiBaseUrl()
+  const url = `${base.replace(/\/$/, '')}/api/reservas`
+
+  const res = await fetch(url)
+
+  if (!res.ok) {
+    throw new Error(await getErrorMessage(res))
+  }
+
+  const result: ApiListResponse<ReservaInterface[]> | ReservaInterface[] = await res.json()
+  return Array.isArray(result) ? result : result.data ?? []
+}
+
+export default { createReservation, getAvailableTables, getReservations }
 
 export function getApiBaseUrl() {
   return (import.meta as any).env?.VITE_API_BASE_URL || 'http://localhost:8000'

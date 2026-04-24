@@ -65,6 +65,36 @@ body {
   padding: 1.5rem;
 }
 
+.reserva-form-layout {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.reserva-form-section {
+  background: #ffffff;
+  border: 1px solid #e4ebf1;
+  border-radius: 1rem;
+  padding: 1.25rem;
+}
+
+.reservas-table-wrap {
+  max-height: 28rem;
+  overflow: auto;
+}
+
+.reservas-table-wrap thead th {
+  position: sticky;
+  top: 0;
+  background-color: #eef4f7;
+  z-index: 1;
+  font-size: 0.85rem;
+}
+
+.reservas-table-wrap tbody td {
+  vertical-align: middle;
+  font-size: 0.92rem;
+}
+
 .swal2-confirm {
   background-color: #1f6f8b !important;
 }

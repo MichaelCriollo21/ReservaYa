@@ -1,13 +1,22 @@
 const pool = require('../config/db')
+const Mesa = require('../models/mesaModel')
+const Reserva = require('../models/Reserva')
 
-// POST /api/reservas
-// Expects body: { Nombre, Telefono, Correo, fechaReservacion, MesaidMesa, Observacion }
+const listarReservas = async (_req, res) => {
+  try {
+    const reservas = await Reserva.listarRecientes()
+    return res.json({ ok: true, data: reservas })
+  } catch (err) {
+    console.error('Error listarReservas:', err)
+    return res.status(500).json({ ok: false, message: 'Error al obtener reservas' })
+  }
+}
+
 const crearReserva = async (req, res) => {
   const reserva = req.body || {}
+  const { nombre, telefono, correo, fechaReservacion, MesaidMesa, observacion } = reserva
 
-  const { Nombre, Telefono, Correo, fechaReservacion, MesaidMesa, Observacion } = reserva
-
-  if (!Nombre || !Telefono || !Correo || !fechaReservacion || !MesaidMesa) {
+  if (!nombre || !telefono || !correo || !fechaReservacion || !MesaidMesa) {
     return res.status(400).json({ ok: false, message: 'Faltan campos requeridos' })
   }
 
@@ -18,62 +27,66 @@ const crearReserva = async (req, res) => {
 
   const now = new Date()
   if (reservationDate < now) {
-    return res.status(400).json({ ok: false, message: 'La fecha de reserva no puede ser anterior a la fecha actual' })
+    return res.status(400).json({
+      ok: false,
+      message: 'La fecha de reserva no puede ser anterior a la fecha actual',
+    })
   }
 
   const connection = await pool.getConnection()
+
   try {
     await connection.beginTransaction()
 
-    const [mesaRows] = await connection.execute(
-      'SELECT idMesa, estado FROM Mesa WHERE idMesa = ? FOR UPDATE',
-      [MesaidMesa]
-    )
+    const mesa = await Mesa.obtenerPorIdParaReserva(connection, MesaidMesa)
 
-    if (!mesaRows.length) {
+    if (!mesa) {
       await connection.rollback()
       return res.status(404).json({ ok: false, message: 'La mesa seleccionada no existe' })
     }
 
-    if (Number(mesaRows[0].estado) === 0) {
+    if (Number(mesa.estado) === 0) {
       await connection.rollback()
-      return res.status(400).json({ ok: false, message: 'La mesa seleccionada no esta disponible' })
+      return res.status(400).json({
+        ok: false,
+        message: 'La mesa seleccionada no esta disponible',
+      })
     }
 
-    const [countRows] = await connection.execute('SELECT COUNT(*) as cnt FROM Reserva')
-    const count = (countRows && countRows[0] && countRows[0].cnt) ? Number(countRows[0].cnt) : 0
-    const next = count + 1
-    const NumeroReserva = `RF-${String(next).padStart(3, '0')}`
-
+    const numeroReserva = await Reserva.obtenerSiguienteNumero(connection)
     const UsuarioidUsuario = reserva.UsuarioidUsuario || 1
 
-    const [result] = await connection.execute(
-      'INSERT INTO Reserva (estado, fechaReservacion, MesaidMesa, UsuarioidUsuario, Nombre, Telefono, Correo, NumeroReserva, Observacion) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [0, reservationDate, MesaidMesa, UsuarioidUsuario, Nombre, Telefono, Correo, NumeroReserva, Observacion || null]
-    )
-
-    await connection.execute(
-      'UPDATE Mesa SET estado = 0 WHERE idMesa = ?',
-      [MesaidMesa]
-    )
-
-    await connection.commit()
-
-    const creado = {
-      idReserva: result.insertId,
-      estado: 0,
+    const result = await Reserva.crear(connection, {
+      estado: false,
       fechaReservacion: reservationDate,
       MesaidMesa,
       UsuarioidUsuario,
-      Nombre,
-      Telefono,
-      Correo,
-      NumeroReserva,
-      Observacion: Observacion || null,
-      estadoMesa: 0,
-    }
+      nombre,
+      telefono,
+      correo,
+      numeroReserva,
+      observacion,
+    })
 
-    return res.status(201).json({ ok: true, data: creado })
+    await Mesa.actualizarEstado(connection, MesaidMesa, 0)
+    await connection.commit()
+
+    return res.status(201).json({
+      ok: true,
+      data: {
+        idReserva: result.insertId,
+        estado: 0,
+        fechaReservacion: reservationDate,
+        MesaidMesa,
+        UsuarioidUsuario,
+        nombre,
+        telefono,
+        correo,
+        numeroReserva,
+        observacion: observacion || null,
+        estadoMesa: 0,
+      },
+    })
   } catch (err) {
     await connection.rollback()
     console.error('Error crearReserva:', err)
@@ -83,4 +96,4 @@ const crearReserva = async (req, res) => {
   }
 }
 
-module.exports = { crearReserva }
+module.exports = { crearReserva, listarReservas }
