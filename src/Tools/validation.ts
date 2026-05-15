@@ -4,7 +4,7 @@ export const messages = {
   invalidEmail: 'Ingresa un correo valido.',
   requiredPhone: 'El telefono es obligatorio.',
   invalidPhone: 'El telefono debe contener entre 7 y 15 digitos.',
-  requiredDate: 'La fecha y hora de la reserva son obligatorias.',
+  requiredDate: 'La fecha de la reserva es obligatoria.',
   selectMesa: 'Selecciona una mesa.',
   invalidPastDate: 'La reserva no puede ser anterior a la fecha y hora actual.',
 }

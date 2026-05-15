@@ -1,10 +1,12 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+
 :root {
   color-scheme: light;
 }
 
 body {
   margin: 0;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: 'Roboto', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   background: linear-gradient(135deg, #17324d 0%, #214f6d 45%, #f4efe7 45%, #f4efe7 100%);
 }
 
@@ -65,6 +67,30 @@ body {
   padding: 1.5rem;
 }
 
+.login-card {
+  max-width: 34rem;
+  margin-inline: auto;
+}
+
+.reservas-top-menu {
+  flex-wrap: wrap;
+}
+
+.reservas-nav-button.btn,
+.reservas-nav-button.btn:hover,
+.reservas-nav-button.btn:focus {
+  background-color: #1f6f8b;
+  border-color: #1f6f8b;
+  color: #fff;
+  font-family: 'Roboto', sans-serif;
+}
+
+.reservas-nav-button.btn:disabled {
+  background-color: rgba(31, 111, 139, 0.55);
+  border-color: rgba(31, 111, 139, 0.55);
+  color: rgba(255, 255, 255, 0.86);
+}
+
 .reserva-form-layout {
   display: grid;
   gap: 1.5rem;
@@ -80,6 +106,23 @@ body {
 .reservas-table-wrap {
   max-height: 28rem;
   overflow: auto;
+}
+
+.reservas-table-small {
+  max-height: 14rem;
+}
+
+.reservas-table-management {
+  max-height: 36rem;
+}
+
+.reserva-search-result {
+  line-height: 1.7;
+}
+
+.reservas-action-buttons .btn {
+  min-height: 2.25rem;
+  white-space: nowrap;
 }
 
 .reservas-table-wrap thead th {

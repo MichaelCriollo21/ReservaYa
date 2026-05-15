@@ -1,4 +1,5 @@
 export interface MesaInterface {
-  id: string
+  idMesa: number
+  numeroMesa: string
   capacidad: number
 }
